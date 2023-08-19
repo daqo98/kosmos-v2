@@ -38,14 +38,14 @@ In the root folder of the Kosmos repo:
 3. Install Kosmos Custom Resource Definitions (CRDs): `kubectl apply -f "config/crd/bases"`
 4. Install RBACs: kubectl apply -f "config/permissions"
 5. To be able to schedule pods on the Kubernetes control-plane node, you need to remove a taint on the master or control-plane nodes:
-  - `kubectl taint nodes --all node-role.kubernetes.io/master-`
-  - `kubectl taint nodes --all  node-role.kubernetes.io/control-plane-`
+    - `kubectl taint nodes --all node-role.kubernetes.io/master-`
+    - `kubectl taint nodes --all  node-role.kubernetes.io/control-plane-`
 6. Deploy app:  `kubectl apply -f "examples/benchmark/application2"`
 7. Deploy metrics: `kubectl apply -f "examples/benchmark/metrics"`
 8. Deploy system autoscaler: `kubectl apply -f "examples/benchmark/system-autoscaler"`
 9. If nginx-admission-patch is failing:
-  - `kubectl delete -A validatingWebhookConfiguration ingress-nginx-admission`
-  - `kubectl apply -f "examples/benchmark/metrics"`
+    - `kubectl delete -A validatingWebhookConfiguration ingress-nginx-admission`
+    - `kubectl apply -f "examples/benchmark/metrics"`
 10. Port-forward the prime-numbers app: `kubectl port-forward service/prime-numbers 8000:8000`
 
 When everything is working:
