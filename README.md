@@ -23,19 +23,35 @@ The controllers are freely inspired from [sample-controller](https://github.com/
 
 
 ### Requirements
-* **Kubernetes with KEP 1287**.
-* **Kubectl**.
+* **Kubectl v1.27.4 (client version)**.
+* **Kind v0.20.0**.
 
 ### Platform setup
-Install Kosmos CRDs:
-```
-kubectl apply -f config/crd/bases
-```
 
-Install RBACs:
-```
-kubectl apply -f config/permissions
-```
+In the root folder of the Kosmos repo:
+
+1. Create Cluster with its config:
+   ```
+   kind create cluster --name k8s-playground --image=kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72 --config "config/cluster-conf/development-cluster.yaml"
+   ```
+2. Create namespace: `kubectl apply -f config/cluster-conf/e2e-namespace.yaml`
+3. Install Kosmos Custom Resource Definitions (CRDs): `kubectl apply -f "config/crd/bases"`
+4. Install RBACs: kubectl apply -f "config/permissions"
+5. To be able to schedule pods on the Kubernetes control-plane node, you need to remove a taint on the master or control-plane nodes:
+  - `kubectl taint nodes --all node-role.kubernetes.io/master-`
+  - `kubectl taint nodes --all  node-role.kubernetes.io/control-plane-`
+6. Deploy app:  `kubectl apply -f "examples/benchmark/application2"`
+7. Deploy metrics: `kubectl apply -f "examples/benchmark/metrics"`
+8. Deploy system autoscaler: `kubectl apply -f "examples/benchmark/system-autoscaler"`
+9. If nginx-admission-patch is failing:
+  - `kubectl delete -A validatingWebhookConfiguration ingress-nginx-admission`
+  - `kubectl apply -f "examples/benchmark/metrics"`
+10. Port-forward the prime-numbers app: `kubectl port-forward service/prime-numbers 8000:8000`
+
+When everything is working:
+1. `kubectl cp kube-system/pod-autoscaler-574d6c9f7f-dwxj8:var/podscale.json podscale.json -c pod-autoscaler` **(DOESN'T WORK)**
+2. `kubectl exec postgres-statefulset-0 -- psql -d awesomedb -U amazinguser -c "\copy response_information to /response.csv delimiter ',' csv header;"`
+3. `kubectl cp postgres-statefulset-0:response.csv response.csv`
 
 ### Run Kosmos Controllers:
 ```
