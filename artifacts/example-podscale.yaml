@@ -1,0 +1,15 @@
+apiVersion: systemautoscaler.polimi.it/v1beta1
+kind: PodScale
+metadata:
+  name: example-podscale
+spec:
+  serviceLevelAgreement:
+    name: example-sla
+    namespace: foo
+  pod:
+    name: example-sa
+    namespace: foo
+  desired:
+    cpu: 40m
+    memory: 70Mi
+status: {}
