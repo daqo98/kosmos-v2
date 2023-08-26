@@ -1,20 +1,22 @@
-BUILD_SETTINGS = CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+BUILD_SETTINGS_LINUX = CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+BUILD_SETTINGS_WINDOWS = CGO_ENABLED=0 GOOS=windows GOARCH=amd64
+TEST_SETTINGS = CGO_ENABLED=1
 IMAGE = pod-autoscaler
-IMAGE_VERSION = $(shell git tag --points-at HEAD | sed '/$(IMAGE)\/.*/!s/.*//' | sed 's/\//:/')
-REPO = systemautoscaler
+IMAGE_VERSION = $(IMAGE):0.5.0 #$(shell git tag --points-at HEAD | sed '/$(IMAGE)\/.*/!s/.*//' | sed 's/\//:/')
+REPO = quintero98#systemautoscaler
 
 .PHONY: all build coverage clean e2e fmt release test vet
 
 all: build test coverage clean
 
 build: fmt vet test
-	$(BUILD_SETTINGS) go build -trimpath -o "$(IMAGE)" ./main.go
+	$(BUILD_SETTINGS_LINUX) go build -trimpath -o "$(IMAGE)" ./main.go
 
 fmt:
 	@go fmt ./...
 
 test:
-	@go test -race $(shell go list ./... | grep -v e2e) --coverprofile=coverage.out
+	$(TEST_SETTINGS) go test -race $(shell go list ./... | grep -v e2e) --coverprofile=coverage.out
 
 e2e:
 	@go test -race $(shell go list ./... | grep e2e)

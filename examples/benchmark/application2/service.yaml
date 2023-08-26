@@ -6,6 +6,6 @@ metadata:
     app: prime-numbers
 spec:
   ports:
-    - port: 8000
+    - port: 80
   selector:
     app: prime-numbers

@@ -140,23 +140,27 @@ func (c *Controller) runNodeScaleWorker() {
 				return
 			}
 
+			// Check the label of the pod if it is allowed to change the pod size
 			// try both updates in dry-run first and then actuate them consistently
-			updatedPod, updatedPodScale, err := c.AtomicResourceUpdate(newPod, podScale)
+			if newPod.GetObjectMeta().GetLabels()["autoscaling"] == "Kosmos" {
+				klog.Info("Kosmos autoscaling activated")
+				updatedPod, updatedPodScale, err := c.AtomicResourceUpdate(newPod, podScale)
 
-			if err != nil {
-				klog.Error("Error while updating pod and podscale: ", err)
-				//TODO: We are using this channel as a workqueue. Why don't use one?
-				c.in <- nodeScale
-				return
+				if err != nil {
+					klog.Error("Error while updating pod and podscale: ", err)
+					//TODO: We are using this channel as a workqueue. Why don't use one?
+					c.in <- nodeScale
+					return
+				}
+
+				//TODO: handle error
+				_ = c.log.Log(updatedPodScale)
+
+				klog.Info("Desired resources:", updatedPodScale.Spec.DesiredResources)
+				klog.Info("Capped resources:", updatedPodScale.Status.CappedResources)
+				klog.Info("Actual resources:", updatedPodScale.Status.ActualResources)
+				klog.Info("Pod resources:", updatedPod.Spec.Containers[0].Resources)
 			}
-
-			//TODO: handle error
-			_ = c.log.Log(updatedPodScale)
-
-			klog.Info("Desired resources:", updatedPodScale.Spec.DesiredResources)
-			klog.Info("Capped resources:", updatedPodScale.Status.CappedResources)
-			klog.Info("Actual resources:", updatedPodScale.Status.ActualResources)
-			klog.Info("Pod resources:", updatedPod.Spec.Containers[0].Resources)
 		}
 	}
 }
