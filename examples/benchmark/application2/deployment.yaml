@@ -6,12 +6,13 @@ spec:
   selector:
     matchLabels:
       app: prime-numbers
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
         app: prime-numbers
         autoscaling: kosmos
+        logger: "on"
     spec:
       affinity:
         podAntiAffinity:
@@ -87,3 +88,38 @@ spec:
             limits:
               memory: 150Mi
               cpu: 250m
+
+        - name: metrics-logger
+          image: quintero98/metrics-logger:dev
+          imagePullPolicy: Always
+          env:
+          - name: MY_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: MY_NS_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: MY_DP_NAME
+            value: prime-numbers # Must be changed manually
+          - name: MY_APP_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['app']
+          - name: CONTAINER_TO_FORWARD
+            value: http-metrics
+          resources:
+            requests:
+              memory: 150Mi
+              cpu: 250m
+            limits:
+              memory: 150Mi
+              cpu: 250m
+          volumeMounts:
+          - name: persistent-storage
+            mountPath: /data 
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: mypvc
