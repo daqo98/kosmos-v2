@@ -55,9 +55,10 @@ spec:
         app: podscale-controller
     spec:
       nodeSelector:
-        role: control-plane
-        #kubernetes.io/hostname: <cluster-name>-control-plane #master
-        #kubernetes.io/hostname: k8s-playground-control-plane
+        node-role.kubernetes.io/control-plane: ""
+        #role: control-plane
+        ##kubernetes.io/hostname: <cluster-name>-control-plane #master
+        ##kubernetes.io/hostname: k8s-playground-control-plane
       automountServiceAccountToken: true
       serviceAccountName: podscale-controller
       containers:
