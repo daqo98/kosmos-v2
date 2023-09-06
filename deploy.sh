@@ -37,6 +37,9 @@ kubectl apply -f "examples/benchmark/metrics"
 # Deploy system-autoscaler
 kubectl apply -f "examples/benchmark/system-autoscaler" #/pod-replica-updater.yaml"
 
+# Deleting podscales since the pod-autoscaler doesn't detect them at first
+kubectl delete podscales --all
+
 kubectl port-forward service/prime-numbers 8080:80
 # kubectl port-forward service/http-metrics 8000:8000
 # Try a request: curl http://localhost:8080/prime/12 or curl http://<Node's_Public_IP>:31512/prime/12
