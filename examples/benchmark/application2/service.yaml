@@ -5,7 +5,12 @@ metadata:
   labels:
     app: prime-numbers
 spec:
-  ports:
-    - port: 80
   selector:
     app: prime-numbers
+  type: NodePort
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    nodePort: 31512
+    protocol: TCP

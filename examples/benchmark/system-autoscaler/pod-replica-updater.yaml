@@ -27,6 +27,9 @@ rules:
   - apiGroups: [ "custom.metrics.k8s.io" ]
     resources: [ "pods/response_time" ]
     verbs: [ "*" ]
+  - apiGroups: [ "custom.metrics.k8s.io" ]
+    resources: [ "services/response_time" ]
+    verbs: [ "*" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -67,6 +70,6 @@ spec:
         ##kubernetes.io/hostname: k8s-playground-control-plane
       containers:
         - name: pod-replicas-updater
-          image: pentabanana/pod-replicas-updater:latest
+          image: systemautoscaler/pod-replicas-updater:0.1.0 #pentabanana/pod-replicas-updater:latest
           imagePullPolicy: Always
       serviceAccountName: pod-replicas-updater
