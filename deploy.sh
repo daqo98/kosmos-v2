@@ -44,7 +44,7 @@ kubectl port-forward service/prime-numbers 8080:80
 # kubectl port-forward service/http-metrics 8000:8000
 # Try a request: curl http://localhost:8080/prime/12 or curl http://<Node's_Public_IP>:31512/prime/12
 ## Locust workload: 
-# cd $HOME/k8s-vertical-scale-to-zero
+# cd $HOME/versca20
 # pipenv install
 # pipenv shell
-# locust -f ~/k8s-vertical-scale-to-zero/locust_workload.py --headless --host=http://localhost:8080/prime/12
+# locust -f ~/versca20/locust_workload.py --headless --host=http://localhost:8080/prime/12
