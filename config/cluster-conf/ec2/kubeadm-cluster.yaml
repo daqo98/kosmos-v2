@@ -1,0 +1,45 @@
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+nodeRegistration:
+  #name: "master"
+  criSocket: "unix:///var/run/containerd/containerd.sock"
+  taints: [] # Avoid taint your control-plane node
+  ignorePreflightErrors:
+    - IsPrivilegedUser
+  imagePullPolicy: "IfNotPresent"
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
+clusterName: "kubernetes"
+kubernetesVersion: "v1.27.5"
+networking:
+  dnsDomain: cluster.local
+  podSubnet: 192.168.0.0/16 #--pod-network-cidr
+  serviceSubnet: 10.96.0.0/12
+apiServer:
+  extraArgs:
+    authorization-mode: "Node,RBAC"
+    feature-gates: "InPlacePodVerticalScaling=true"
+  timeoutForControlPlane: 4m0s
+controllerManager:
+  extraArgs:
+    feature-gates: "InPlacePodVerticalScaling=true"
+dns: {}
+etcd:
+  local:
+    dataDir: /var/lib/etcd
+scheduler:
+  extraArgs:
+    feature-gates: "InPlacePodVerticalScaling=true"
+certificatesDir: "/etc/kubernetes/pki"
+imageRepository: "registry.k8s.io"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+# kubelet specific options here
+featureGates:
+  InPlacePodVerticalScaling: true
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+# kube-proxy specific options here
