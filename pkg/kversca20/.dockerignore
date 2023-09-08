@@ -1,0 +1,12 @@
+# Ignore everything
+**
+
+# ... except for dependencies and source
+!Pipfile
+!Pipfile.lock
+!KVerSca20.py
+!KVerSca20_operator.py
+!KVerSca20_threading.py
+!KVerSca20_no_threading.py
+!KVerSca20_test.py
+!metrics_logger.py
