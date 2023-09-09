@@ -8,12 +8,11 @@ from threading import Thread
 import time
 
 from KVerSca20_operator import *
-from VerSca20_operator import *
 
 # Create and configure logger
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.DEBUG) #, datefmt='%m/%d/%Y %H:%M:%S %z')
 logger = logging.getLogger("sidecar_proxy")
-container_to_forward = "http-metrics" #os.environ['CONTAINER_TO_FORWARD'] #"http-metrics" 
+container_to_forward = os.environ['CONTAINER_TO_FORWARD'] #"http-metrics"
 
 # Changing the buffer_size and delay, you can improve the speed and bandwidth.
 # But when buffer get to high or delay go too down, you can broke things
@@ -23,7 +22,16 @@ forward_to = ('127.0.0.1', getContainersPort(container_to_forward)) # Find port 
 PROXY_PORT = 80
 TIME_SHORT = 30.0 # Timer to zeroimport logging
 TIME_LONG = 90.0
-PROXY_ADDR = ('127.0.0.1', PROXY_PORT)
+INTERNAL_PROXY_ADDR = ('127.0.0.1', PROXY_PORT)
+
+# Get the local host name
+myHostName = socket.gethostname()
+logger.info(f"Name of the localhost is {myHostName}")
+# Get the IP address of the local host
+myIP = socket.gethostbyname(myHostName)
+logger.info(f"IP address of the localhost is {myIP}")
+EXTERNAL_PROXY_ADDR = (myIP,PROXY_PORT)
+PROXY_LIST = [INTERNAL_PROXY_ADDR, EXTERNAL_PROXY_ADDR]
 
 class Forward:
     def __init__(self):
@@ -75,6 +83,7 @@ class TheServer:
         self.users_in_sys = 0
         self.clients_req_pending_list = []
         self.reqs_per_client = {}
+        self.fd_to_client_dict = {}
 
         self.to_zero_flag = False
         self.thr_to_zero = Thread(target=self.thread_to_zero)
@@ -176,14 +185,20 @@ class TheServer:
             self.input_list.append(forward)
             self.channel[clientsock] = forward
             self.channel[forward] = clientsock
+            self.fd_to_client_dict[clientsock.fileno()] = clientaddr
         else:
             logger.info("Can't establish connection with remote server.")
             logger.info(f"Closing connection with client side {clientaddr}")
             clientsock.close()
 
     def on_close(self):
-        conn_orig_remote = self.conn_orig.getpeername()
-        logger.info(f"{self.conn_orig.getpeername()} has disconnected")
+    
+        try:
+            conn_orig_remote = self.conn_orig.getpeername()
+        except:
+            conn_orig_remote = self.fd_to_client_dict[self.conn_orig.fileno()]
+
+        logger.info(f"{conn_orig_remote} has disconnected")
                 
         if conn_orig_remote in self.clients_req_pending_list:
             logger.info("Client disconnected had pending requests")
@@ -191,6 +206,8 @@ class TheServer:
             self.clients_req_pending_list.remove(conn_orig_remote)
             del self.reqs_per_client[conn_orig_remote]
             self.timer_controlled_by_reqs()
+
+        del self.fd_to_client_dict[self.conn_orig.fileno()]    
 
         # remove objects from input_list
         self.input_list.remove(self.conn_orig)
@@ -231,7 +248,7 @@ class TheServer:
             #if self.t.is_alive(): self.t.cancel()
             #self.create_and_start_timer(TIME_LONG)
         # Proxy receiving response to a pending request
-        if ((conn_dst_local == PROXY_ADDR) and (conn_dst_remote in self.clients_req_pending_list)):
+        if ((conn_dst_local in PROXY_LIST) and (conn_dst_remote in self.clients_req_pending_list)):
             self.reqs_in_queue = self.reqs_in_queue - 1
             self.reqs_per_client[conn_dst_remote] = self.reqs_per_client[conn_dst_remote] - 1
             self.clients_req_pending_list.remove(conn_dst_remote)
