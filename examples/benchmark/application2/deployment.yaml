@@ -95,7 +95,7 @@ spec:
               cpu: 250m
 
         - name: metrics-logger
-          image: quintero98/metrics-logger:dev
+          image: quintero98/metrics-logger:v0.1
           imagePullPolicy: Always
           env:
           - name: MY_POD_NAME

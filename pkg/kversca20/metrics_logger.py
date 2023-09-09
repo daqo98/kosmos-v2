@@ -36,7 +36,7 @@ def k8s_metrics_logger():
             metrics["throughput"] = http_metrics['throughput']
 
     currentDir = os.path.dirname(__file__)
-    absolutePath = os.path.join(currentDir, "data") #"mnt/data"
+    absolutePath = os.path.join(currentDir, "data") # "mnt/data"
     filename = pod_name +'.csv'
     filepath = os.path.join(absolutePath, filename)
     file_exists = os.path.isfile(filepath)
@@ -63,20 +63,21 @@ def main():
     ctr = 0
     lim_rows_zero_state = 5
     while True:
-        if (getPodLabel('logger') == "on" and ctr < lim_rows_zero_state):
+        # if (getPodLabel('logger') == "on" and ctr < lim_rows_zero_state):
+        # if (getPodLabel('logger') == "on" and not isInZeroState(zero_state)):
+        if (getPodLabel('logger') == "on"):
             k8s_metrics_logger()
             
-        if isInZeroState(zero_state): 
+        """ if isInZeroState(zero_state): 
             ctr = ctr + 1
         else: 
-            ctr = 0
+            ctr = 0 """
 
         time.sleep(1)
 
 if __name__ == '__main__':
     try:
         main()
-        #pprint(k8s_metrics_logger())
     except KeyboardInterrupt:
         logger.info("Ctrl C - Stopping server")
         sys.exit(1)
