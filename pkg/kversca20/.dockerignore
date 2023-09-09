@@ -10,3 +10,4 @@
 !KVerSca20_no_threading.py
 !KVerSca20_test.py
 !metrics_logger.py
+!locust_workload.py
