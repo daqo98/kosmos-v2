@@ -3,8 +3,7 @@ import os
 import sys
 import socket
 import select
-from threading import Timer
-from threading import Thread
+from threading import Timer, Thread
 import time
 
 from KVerSca20_operator import *
@@ -192,7 +191,7 @@ class TheServer:
             clientsock.close()
 
     def on_close(self):
-    
+        # Handling client-side socket disconnection before we close it 
         try:
             conn_orig_remote = self.conn_orig.getpeername()
         except:
@@ -207,7 +206,13 @@ class TheServer:
             del self.reqs_per_client[conn_orig_remote]
             self.timer_controlled_by_reqs()
 
-        del self.fd_to_client_dict[self.conn_orig.fileno()]    
+        # Deleting entry from file descriptor to client dictionary
+        # Client-side disconnection
+        if self.conn_orig.fileno() in self.fd_to_client_dict:
+            del self.fd_to_client_dict[self.conn_orig.fileno()]
+        # Server-side disconnection
+        else:
+            del self.fd_to_client_dict[self.channel[self.conn_orig].fileno()]   
 
         # remove objects from input_list
         self.input_list.remove(self.conn_orig)
