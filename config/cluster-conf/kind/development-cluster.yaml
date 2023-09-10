@@ -9,13 +9,28 @@ nodes:
 - role: control-plane
   labels:
     role: control-plane
-
+    
   extraPortMappings:
   - containerPort: 30080
     hostPort: 30080
     listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
     protocol: tcp # Optional, defaults to tcp
+  - containerPort: 31080 # SeBS-compression
+    hostPort: 31080
+    listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
+    protocol: tcp # Optional, defaults to tcp
+  - containerPort: 31081 # SeBS-dynamic_html
+    hostPort: 31081
+    listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
+    protocol: tcp # Optional, defaults to tcp
+  - containerPort: 31082 # SeBS-network
+    hostPort: 31082
+    listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
+    protocol: tcp # Optional, defaults to tcp
+  - containerPort: 31083 # SeBS-thumbnailer
+    hostPort: 31083
+    listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
+    protocol: tcp # Optional, defaults to tcp
 - role: worker
 - role: worker
 - role: worker
-
