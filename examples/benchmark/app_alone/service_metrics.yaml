@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: prime-numbers
+  name: http-metrics
   labels:
     app: prime-numbers
 spec:
