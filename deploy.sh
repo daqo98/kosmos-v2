@@ -17,7 +17,18 @@ kubectl taint nodes --all node-role.kubernetes.io/master-
 kubectl taint nodes --all  node-role.kubernetes.io/control-plane-
 
 # Deploy app
-kubectl apply -f "examples/benchmark/application2"
+echo "Choose the configuration to deploy:"
+echo "1. App"
+echo "2. App + KVerSca20"
+read -p "Choice: " answer
+
+if [[ $answer = 1 ]]; then
+    kubectl apply -f "examples/benchmark/app_alone"
+elif [[ $answer = 2 ]]; then
+    kubectl apply -f "examples/benchmark/app_and_kversca20"
+else
+     echo "Run again the script and choose one of the options"
+fi
 
 # Deploy metrics
 kubectl apply -f "examples/benchmark/metrics"

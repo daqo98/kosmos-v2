@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sebs-dynamic-html
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sebs-dynamic-html
+  template:
+    metadata:
+      labels:
+        app: sebs-dynamic-html
+        autoscaling: kosmos
+        logger: "on"
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - sebs-dynamic-html
+              topologyKey: "kubernetes.io/hostname"
+      serviceAccountName: pod-controller-sa
+      containers:
+        - name: sebs-dynamic-html
+          image: quintero98/sebs:v0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          resizePolicy:
+            - resourceName: cpu
+              restartPolicy: NotRequired
+            - resourceName: memory
+              restartPolicy: NotRequired
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 250m
+            limits:
+              memory: 128Mi
+              cpu: 250m
+        - name: http-metrics
+          image: systemautoscaler/http-metrics:0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: ADDRESS
+              value: "localhost"
+            - name: PORT
+              value: "8080"
+            - name: WINDOW_SIZE
+              value: "30s"
+            - name: WINDOW_GRANULARITY
+              value: "1ms"
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 250m
+            limits:
+              memory: 128Mi
+              cpu: 250m
+        - name: proxy-vertical-scaling
+          image: quintero98/kversca20:v0.3 #0.1_threading #0.2
+          imagePullPolicy: Always
+          env:
+          - name: MY_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: MY_NS_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: MY_DP_NAME
+            value: sebs-dynamic-html # Must be changed manually
+          - name: MY_APP_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['app']
+          - name: CONTAINER_TO_FORWARD
+            value: http-metrics
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: 150Mi
+              cpu: 250m
+            limits:
+              memory: 150Mi
+              cpu: 250m
+
+        - name: metrics-logger
+          image: quintero98/metrics-logger:v0.1
+          imagePullPolicy: Always
+          env:
+          - name: MY_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: MY_NS_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: MY_DP_NAME
+            value: sebs-dynamic-html # Must be changed manually
+          - name: MY_APP_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['app']
+          resources:
+            requests:
+              memory: 150Mi
+              cpu: 250m
+            limits:
+              memory: 150Mi
+              cpu: 250m
+          volumeMounts:
+          - name: persistent-storage
+            mountPath: /data 
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: mypvc
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: sebs-dynamic-html
+spec:
+  selector:
+    app: sebs-dynamic-html
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 31081
+      protocol: TCP

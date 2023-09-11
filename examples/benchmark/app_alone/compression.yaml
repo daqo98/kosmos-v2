@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prime-numbers
+  name: sebs-compression
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: prime-numbers
-  replicas: 1
+      app: sebs-compression
   template:
     metadata:
       labels:
-        app: prime-numbers
+        app: sebs-compression
         autoscaling: kosmos
         logger: "on"
     spec:
@@ -22,12 +22,12 @@ spec:
                   - key: app
                     operator: In
                     values:
-                      - prime-numbers
+                      - sebs-compression
               topologyKey: "kubernetes.io/hostname"
       serviceAccountName: pod-controller-sa
       containers:
-        - name: prime-numbers
-          image: systemautoscaler/prime-numbers:0.1.0
+        - name: sebs-compression
+          image: quintero98/sebs:v0.1.0
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -47,7 +47,7 @@ spec:
           image: systemautoscaler/http-metrics:0.1.0
           imagePullPolicy: Always
           ports:
-            - containerPort: 8000
+            - containerPort: 80
           env:
             - name: ADDRESS
               value: "localhost"
@@ -64,36 +64,6 @@ spec:
             limits:
               memory: 128Mi
               cpu: 250m
-        - name: proxy-vertical-scaling
-          image: quintero98/kversca20:v0.3 #0.1_threading #0.2
-          imagePullPolicy: Always
-          env:
-          - name: MY_POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: MY_NS_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: MY_DP_NAME
-            value: prime-numbers # Must be changed manually
-          - name: MY_APP_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.labels['app']
-          - name: CONTAINER_TO_FORWARD
-            value: http-metrics
-          ports:
-            - containerPort: 80
-          resources:
-            requests:
-              memory: 150Mi
-              cpu: 250m
-            limits:
-              memory: 150Mi
-              cpu: 250m
-
         - name: metrics-logger
           image: quintero98/metrics-logger:v0.1
           imagePullPolicy: Always
@@ -107,7 +77,7 @@ spec:
               fieldRef:
                 fieldPath: metadata.namespace
           - name: MY_DP_NAME
-            value: prime-numbers # Must be changed manually
+            value: sebs-compression # Must be changed manually
           - name: MY_APP_NAME
             valueFrom:
               fieldRef:
@@ -126,3 +96,17 @@ spec:
       - name: persistent-storage
         persistentVolumeClaim:
           claimName: mypvc
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: sebs-compression
+spec:
+  selector:
+    app: sebs-compression
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 31080
+      protocol: TCP

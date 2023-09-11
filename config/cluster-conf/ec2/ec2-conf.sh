@@ -30,6 +30,7 @@ cd $HOME
 git clone https://github.com/daqo98/versca20.git
 git clone https://github.com/daqo98/kversca20.git
 sudo apt install -y pip
+pip install gdown
 pip install pipenv
 echo "export PATH=$PATH:$HOME/.local/bin" >> ~/.bashrc
 source ~/.bashrc
