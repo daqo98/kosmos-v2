@@ -38,10 +38,10 @@ spec:
               restartPolicy: NotRequired
           resources:
             requests:
-              memory: 128Mi
+              memory: 2Gi
               cpu: 250m
             limits:
-              memory: 128Mi
+              memory: 2Gi
               cpu: 250m
         - name: http-metrics
           image: systemautoscaler/http-metrics:0.1.0
@@ -65,7 +65,7 @@ spec:
               memory: 128Mi
               cpu: 250m
         - name: proxy-vertical-scaling
-          image: quintero98/kversca20:v0.3 #0.1_threading #0.2
+          image: quintero98/kversca20:v0.4 #0.1_threading #0.2
           imagePullPolicy: Always
           env:
           - name: MY_POD_NAME

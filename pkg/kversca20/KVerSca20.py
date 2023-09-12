@@ -9,7 +9,7 @@ import time
 from KVerSca20_operator import *
 
 # Create and configure logger
-logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.DEBUG) #, datefmt='%m/%d/%Y %H:%M:%S %z')
+logging.basicConfig(filename='logger.log', filemode='a', format='%(asctime)s - %(levelname)s: %(message)s', level=logging.DEBUG) #, datefmt='%m/%d/%Y %H:%M:%S %z')
 logger = logging.getLogger("sidecar_proxy")
 container_to_forward = os.environ['CONTAINER_TO_FORWARD'] #"http-metrics"
 
@@ -21,6 +21,7 @@ forward_to = ('127.0.0.1', getContainersPort(container_to_forward)) # Find port 
 PROXY_PORT = 80
 TIME_SHORT = 30.0 # Timer to zeroimport logging
 TIME_LONG = 90.0
+HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 INTERNAL_PROXY_ADDR = ('127.0.0.1', PROXY_PORT)
 
 # Get the local host name
@@ -191,19 +192,29 @@ class TheServer:
             clientsock.close()
 
     def on_close(self):
-        # Handling client-side socket disconnection before we close it 
+        # Handling client-side or app-side socket disconnection before we close them
         try:
-            conn_orig_remote = self.conn_orig.getpeername()
+            if self.conn_orig.fileno() in self.fd_to_client_dict:
+                client_addr = self.conn_orig.getpeername()
+                logger.info(f"{client_addr} has disconnected by CLIENT-PROXY socket")
+            else:
+                client_addr = self.channel[self.conn_orig].getpeername()
+                logger.info(f"{client_addr} has disconnected by PROXY-APP socket")
         except:
-            conn_orig_remote = self.fd_to_client_dict[self.conn_orig.fileno()]
+            # Client-side disconnection
+            if self.conn_orig.fileno() in self.fd_to_client_dict:
+                client_addr = self.fd_to_client_dict[self.conn_orig.fileno()]
+                logger.info(f"{client_addr} has disconnected by CLIENT-PROXY socket (getpeername() error)")
+            # Server-side disconnection
+            else:
+                client_addr = self.fd_to_client_dict[self.channel[self.conn_orig].fileno()]
+                logger.info(f"{client_addr} has disconnected by PROXY-APP socket (getpeername() error)")
 
-        logger.info(f"{conn_orig_remote} has disconnected")
-                
-        if conn_orig_remote in self.clients_req_pending_list:
+        if client_addr in self.clients_req_pending_list:
             logger.info("Client disconnected had pending requests")
-            self.reqs_in_queue = self.reqs_in_queue - self.reqs_per_client[conn_orig_remote]
-            self.clients_req_pending_list.remove(conn_orig_remote)
-            del self.reqs_per_client[conn_orig_remote]
+            self.reqs_in_queue = self.reqs_in_queue - self.reqs_per_client[client_addr]
+            self.clients_req_pending_list.remove(client_addr)
+            del self.reqs_per_client[client_addr]
             self.timer_controlled_by_reqs()
 
         # Deleting entry from file descriptor to client dictionary
@@ -212,7 +223,7 @@ class TheServer:
             del self.fd_to_client_dict[self.conn_orig.fileno()]
         # Server-side disconnection
         else:
-            del self.fd_to_client_dict[self.channel[self.conn_orig].fileno()]   
+            del self.fd_to_client_dict[self.channel[self.conn_orig].fileno()]
 
         # remove objects from input_list
         self.input_list.remove(self.conn_orig)
@@ -243,7 +254,7 @@ class TheServer:
         # TRANSITIONS
         # Socket obj: For laddr use mySocket.getsockname() and for raddr use mySocket.getpeername()
         # Proxy receiving GET request
-        if ((conn_dst_remote == forward_to) and ("GET" in data.decode())):
+        if ((conn_dst_remote == forward_to) and (any(m in data.decode() for m in HTTP_METHODS))):
             self.reqs_in_queue = self.reqs_in_queue + 1
             if conn_orig_remote not in self.reqs_per_client:
                 self.reqs_per_client[conn_orig_remote] = 1
