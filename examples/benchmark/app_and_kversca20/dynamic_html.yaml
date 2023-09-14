@@ -131,6 +131,8 @@ kind: Service
 apiVersion: v1
 metadata:
   name: sebs-dynamic-html
+  labels:
+    app: sebs-dynamic-html
 spec:
   selector:
     app: sebs-dynamic-html

@@ -131,6 +131,8 @@ kind: Service
 apiVersion: v1
 metadata:
   name: sebs-network
+  labels:
+    app: sebs-network
 spec:
   selector:
     app: sebs-network

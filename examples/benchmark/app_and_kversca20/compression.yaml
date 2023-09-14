@@ -131,6 +131,8 @@ kind: Service
 apiVersion: v1
 metadata:
   name: sebs-compression
+  labels:
+    app: sebs-compression
 spec:
   selector:
     app: sebs-compression
