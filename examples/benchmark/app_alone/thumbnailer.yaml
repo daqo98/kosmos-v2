@@ -101,6 +101,8 @@ kind: Service
 apiVersion: v1
 metadata:
   name: sebs-thumbnailer
+  labels:
+    app: sebs-thumbnailer
 spec:
   selector:
     app: sebs-thumbnailer
