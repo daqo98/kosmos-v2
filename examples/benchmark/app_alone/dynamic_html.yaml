@@ -7,7 +7,6 @@ spec:
   selector:
     matchLabels:
       app: sebs-dynamic-html
-  
   template:
     metadata:
       labels:
@@ -110,6 +109,6 @@ spec:
   type: NodePort
   ports:
     - port: 80
-      targetPort: 8000
+      targetPort: 80
       nodePort: 31081
       protocol: TCP
