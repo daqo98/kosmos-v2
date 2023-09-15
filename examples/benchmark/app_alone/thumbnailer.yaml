@@ -47,7 +47,7 @@ spec:
           image: systemautoscaler/http-metrics:0.1.0
           imagePullPolicy: Always
           ports:
-            - containerPort: 8000
+            - containerPort: 80
           env:
             - name: ADDRESS
               value: "localhost"
@@ -108,7 +108,7 @@ spec:
     app: sebs-thumbnailer
   type: NodePort
   ports:
-    - port: 8000
-      targetPort: 8000
+    - port: 80
+      targetPort: 80
       nodePort: 31083
       protocol: TCP
