@@ -239,6 +239,10 @@ class TheServer:
         logger.info(self.separator)
 
     def on_recv(self):
+
+        if isInZeroState(self.zero_state):
+            self.vscale_from_zero()
+
         data = self.data
         logger.info(data)
 
