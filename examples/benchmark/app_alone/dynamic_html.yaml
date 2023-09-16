@@ -11,7 +11,7 @@ spec:
     metadata:
       labels:
         app: sebs-dynamic-html
-        autoscaling: kosmos
+        autoscaling: Kosmos
         logger: "on"
     spec:
       affinity:

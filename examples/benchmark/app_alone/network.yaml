@@ -11,7 +11,7 @@ spec:
     metadata:
       labels:
         app: sebs-network
-        autoscaling: kosmos
+        autoscaling: Kosmos
         logger: "on"
     spec:
       affinity:

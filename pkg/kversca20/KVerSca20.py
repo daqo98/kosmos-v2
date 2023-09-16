@@ -86,8 +86,8 @@ class TheServer:
         self.fd_to_client_dict = {}
 
         self.to_zero_flag = False
-        self.thr_to_zero = Thread(target=self.thread_to_zero)
-        self.thr_to_zero.start()
+        # self.thr_to_zero = Thread(target=self.thread_to_zero)
+        # self.thr_to_zero.start()
 
     def thread_to_zero(self):
         ctr = 0
