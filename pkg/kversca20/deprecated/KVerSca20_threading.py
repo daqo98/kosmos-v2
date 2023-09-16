@@ -1,16 +1,17 @@
 import logging
+import os
 import sys
 import socket
 import select
-from threading import *
+from threading import Timer, Thread
 import time
 
 from KVerSca20_operator import *
 
 # Create and configure logger
-logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.DEBUG) #, datefmt='%m/%d/%Y %H:%M:%S %z')
+logging.basicConfig(filename='logger.log', filemode='a', format='%(asctime)s - %(levelname)s: %(message)s', level=logging.DEBUG) #, datefmt='%m/%d/%Y %H:%M:%S %z')
 logger = logging.getLogger("sidecar_proxy")
-container_to_forward = os.environ['CONTAINER_TO_FORWARD'] #"http-metrics" 
+container_to_forward = os.environ['CONTAINER_TO_FORWARD'] #"http-metrics"
 
 # Changing the buffer_size and delay, you can improve the speed and bandwidth.
 # But when buffer get to high or delay go too down, you can broke things
@@ -20,19 +21,17 @@ forward_to = ('127.0.0.1', getContainersPort(container_to_forward)) # Find port 
 PROXY_PORT = 80
 TIME_SHORT = 30.0 # Timer to zeroimport logging
 TIME_LONG = 90.0
-PROXY_ADDR = ('127.0.0.1', PROXY_PORT)
+HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+INTERNAL_PROXY_ADDR = ('127.0.0.1', PROXY_PORT)
 
-
-class ResourcesState():
-    def __init__(self, cpu_req, cpu_lim, **kwargs):
-        self.cpu_req = cpu_req
-        self.cpu_lim = cpu_lim
-
-        for key, val in kwargs.items():
-            if (key == "mem_req"): self.mem_req = val
-            if (key == "mem_lim"): self.mem_lim = val
-            if (key == "resp_time"): self.resp_time = val
-
+# Get the local host name
+myHostName = socket.gethostname()
+logger.info(f"Name of the localhost is {myHostName}")
+# Get the IP address of the local host
+myIP = socket.gethostbyname(myHostName)
+logger.info(f"IP address of the localhost is {myIP}")
+EXTERNAL_PROXY_ADDR = (myIP,PROXY_PORT)
+PROXY_LIST = [INTERNAL_PROXY_ADDR, EXTERNAL_PROXY_ADDR]
 
 class Forward:
     def __init__(self):
@@ -81,22 +80,36 @@ class TheServer:
         self.users_in_sys = 0
         self.clients_req_pending_list = []
         self.reqs_per_client = {}
+        self.fd_to_client_dict = {}
+
+        self.to_zero_flag = False
+        self.thr_to_zero = Thread(target=self.thread_to_zero)
+        self.thr_to_zero.start()
+
+    def thread_to_zero(self):
+        ctr = 0
+        while True:
+            if self.to_zero_flag:          
+                if not isInZeroState(self.zero_state):
+                    verticalScale(self.zero_state.cpu_req, self.zero_state.cpu_lim)
+                    ctr = ctr+1
+                    logger.info(f"Cycle of {self.waiting_time_interval} secs #: {ctr}")
+                    time.sleep(self.waiting_time_interval)
+            else:
+                ctr = 0
+
 
     def vscale_to_zero(self):
+        self.to_zero_flag = True
         logger.info(self.separator)
         logger.info("Vertical scale TO zero")
         modifyLabel('autoscaling',"VerSca20")
-        ctr = 0
-        while not isInZeroState(self.zero_state):
-            #verticalScale(cpu_req = self.zero_state.cpu_req, cpu_lim = self.zero_state.cpu_lim, mem_req = self.zero_state.mem_req, mem_lim = self.zero_state.mem_lim)
-            verticalScale(self.zero_state.cpu_req, self.zero_state.cpu_lim)
-            ctr = ctr+1
-            logger.info(f"Cycle of {self.waiting_time_interval} secs #: {ctr}")
-            time.sleep(self.waiting_time_interval)
+        verticalScale(self.zero_state.cpu_req, self.zero_state.cpu_lim)
         #updateSLA(self.zero_state.cpu_req, self.zero_state.cpu_lim, self.zero_state.mem_req, self.zero_state.mem_lim, self.zero_state.resp_time)
         logger.info(self.separator)
 
     def vscale_from_zero(self):
+        self.to_zero_flag = False
         logger.info(self.separator)
         logger.info("Vertical scale FROM zero")
         [cpu_req, cpu_lim, mem_req, mem_lim] = getDefaultConfigContainer()
@@ -179,6 +192,7 @@ class TheServer:
             logger.info(self.separator)
             logger.info(f"{clientaddr} has connected")
 
+            self.fd_to_client_dict[clientsock.fileno()] = clientaddr
             thr = Thread(target=self.proxy_thread, args=(forward, clientsock))
             thr.start()
             
@@ -189,18 +203,38 @@ class TheServer:
             clientsock.close()
 
     def on_close(self, conn_orig, input_list, channel):
-        #logger.debug(f'On close of: {current_thread().name} - ID: {get_ident()}')
-        #logger.debug(f'Socket on_close: {conn_orig}')
-        
-        conn_orig_remote = conn_orig.getpeername()
-        logger.info(f"{conn_orig.getpeername()} has disconnected")
-                
-        if conn_orig_remote in self.clients_req_pending_list:
+        # Handling client-side or app-side socket disconnection before we close them  
+        try:
+            if self.conn_orig.fileno() in self.fd_to_client_dict:
+                client_addr = self.conn_orig.getpeername()
+                logger.info(f"{client_addr} has disconnected by CLIENT-PROXY socket")
+            else:
+                client_addr = self.channel[self.conn_orig].getpeername()
+                logger.info(f"{client_addr} has disconnected by PROXY-APP socket")
+        except:
+            # Client-side disconnection
+            if self.conn_orig.fileno() in self.fd_to_client_dict:
+                client_addr = self.fd_to_client_dict[self.conn_orig.fileno()]
+                logger.info(f"{client_addr} has disconnected by CLIENT-PROXY socket (getpeername() error)")
+            # Server-side disconnection
+            else:
+                client_addr = self.fd_to_client_dict[self.channel[self.conn_orig].fileno()]
+                logger.info(f"{client_addr} has disconnected by PROXY-APP socket (getpeername() error)")
+
+        if client_addr in self.clients_req_pending_list:
             logger.info("Client disconnected had pending requests")
-            self.reqs_in_queue = self.reqs_in_queue - self.reqs_per_client[conn_orig_remote]
-            self.clients_req_pending_list.remove(conn_orig_remote)
-            del self.reqs_per_client[conn_orig_remote]
+            self.reqs_in_queue = self.reqs_in_queue - self.reqs_per_client[client_addr]
+            self.clients_req_pending_list.remove(client_addr)
+            del self.reqs_per_client[client_addr]
             self.timer_controlled_by_reqs()
+
+        # Deleting entry from file descriptor to client dictionary
+        # Client-side disconnection
+        if self.conn_orig.fileno() in self.fd_to_client_dict:
+            del self.fd_to_client_dict[self.conn_orig.fileno()]
+        # Server-side disconnection
+        else:
+            del self.fd_to_client_dict[self.channel[self.conn_orig].fileno()]
 
         # remove objects from input_list
         input_list.remove(conn_orig)
@@ -216,9 +250,10 @@ class TheServer:
         logger.info(self.separator)
 
     def on_recv(self, conn_orig, input_list, channel, data):
-        #logger.debug(f'On recv of: {current_thread().name} - ID: {get_ident()}')
-        #logger.debug(f'Socket on_recv: {conn_orig}')
-        #logger.debug(f'Channel[Socket] on_recv: {channel[conn_orig]}')
+        
+        if isInZeroState(self.zero_state):
+            self.vscale_from_zero()
+            
         run_thread = True
         logger.info(data)
 
@@ -234,7 +269,7 @@ class TheServer:
         # TRANSITIONS
         # Socket obj: For laddr use mySocket.getsockname() and for raddr use mySocket.getpeername()
         # Proxy receiving GET request
-        if ((conn_dst_remote == forward_to) and ("GET" in data.decode())):
+        if ((conn_dst_remote == forward_to) and (any(m in data.decode() for m in HTTP_METHODS))):
             self.reqs_in_queue = self.reqs_in_queue + 1
             if conn_orig_remote not in self.reqs_per_client:
                 self.reqs_per_client[conn_orig_remote] = 1
@@ -244,7 +279,7 @@ class TheServer:
             #if self.t.is_alive(): self.t.cancel()
             #self.create_and_start_timer(TIME_LONG)
         # Proxy receiving response to a pending request
-        if ((conn_dst_local == PROXY_ADDR) and (conn_dst_remote in self.clients_req_pending_list)):
+        if ((conn_dst_local in PROXY_LIST) and (conn_dst_remote in self.clients_req_pending_list)):
             self.reqs_in_queue = self.reqs_in_queue - 1
             self.reqs_per_client[conn_dst_remote] = self.reqs_per_client[conn_dst_remote] - 1
             self.clients_req_pending_list.remove(conn_dst_remote)
@@ -274,7 +309,4 @@ if __name__ == '__main__':
         server.main_loop()
     except KeyboardInterrupt:
         logger.info("Ctrl C - Stopping server")
-        #logger.debug(f'Closing app, currently on thread: {current_thread().name} - ID: {get_ident()}')
-        #logger.debug(f"{active_count()} active threads")
-        #logger.debug(f"List of running threads: {enumerate()}")
         sys.exit(1)
