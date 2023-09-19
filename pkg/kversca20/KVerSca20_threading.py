@@ -147,6 +147,7 @@ class TheServer:
             inputready, outputready, exceptready = ss([self.server], [], [])
             for conn_orig in inputready:
                 if conn_orig == self.server:
+                    logger.debug(f'con_orig == server -> con_orig:{conn_orig}')
                     if isInZeroState(self.zero_state):
                         self.vscale_from_zero()
                     self.on_accept() # Attempt to connect client
@@ -205,20 +206,20 @@ class TheServer:
     def on_close(self, conn_orig, input_list, channel):
         # Handling client-side or app-side socket disconnection before we close them  
         try:
-            if self.conn_orig.fileno() in self.fd_to_client_dict:
-                client_addr = self.conn_orig.getpeername()
+            if conn_orig.fileno() in self.fd_to_client_dict:
+                client_addr = conn_orig.getpeername()
                 logger.info(f"{client_addr} has disconnected by CLIENT-PROXY socket")
             else:
-                client_addr = self.channel[self.conn_orig].getpeername()
+                client_addr = channel[conn_orig].getpeername()
                 logger.info(f"{client_addr} has disconnected by PROXY-APP socket")
         except:
             # Client-side disconnection
-            if self.conn_orig.fileno() in self.fd_to_client_dict:
-                client_addr = self.fd_to_client_dict[self.conn_orig.fileno()]
+            if conn_orig.fileno() in self.fd_to_client_dict:
+                client_addr = self.fd_to_client_dict[conn_orig.fileno()]
                 logger.info(f"{client_addr} has disconnected by CLIENT-PROXY socket (getpeername() error)")
             # Server-side disconnection
             else:
-                client_addr = self.fd_to_client_dict[self.channel[self.conn_orig].fileno()]
+                client_addr = self.fd_to_client_dict[channel[conn_orig].fileno()]
                 logger.info(f"{client_addr} has disconnected by PROXY-APP socket (getpeername() error)")
 
         if client_addr in self.clients_req_pending_list:

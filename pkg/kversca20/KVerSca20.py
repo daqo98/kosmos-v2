@@ -240,7 +240,7 @@ class TheServer:
 
     def on_recv(self):
 
-        if isInZeroState(self.zero_state):
+        if self.to_zero_flag:
             self.vscale_from_zero()
 
         data = self.data
