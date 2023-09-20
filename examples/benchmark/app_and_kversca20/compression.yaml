@@ -11,7 +11,7 @@ spec:
     metadata:
       labels:
         app: sebs-compression
-        autoscaling: kosmos
+        autoscaling: Kosmos
         logger: "on"
     spec:
       affinity:
@@ -38,10 +38,10 @@ spec:
               restartPolicy: NotRequired
           resources:
             requests:
-              memory: 1Gi
+              memory: 2Gi
               cpu: 250m
             limits:
-              memory: 1Gi
+              memory: 2Gi
               cpu: 250m
         - name: http-metrics
           image: systemautoscaler/http-metrics:0.1.0
