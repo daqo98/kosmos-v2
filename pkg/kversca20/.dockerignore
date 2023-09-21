@@ -11,3 +11,4 @@
 !KVerSca20_test.py
 !metrics_logger.py
 !locust_workload.py
+!only_proxy.py
