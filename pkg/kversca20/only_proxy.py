@@ -76,7 +76,6 @@ class TheServer:
         Returns: Nothing
         """
         self.input_list.append(self.server)
-        self.create_and_start_timer(TIME_SHORT)
         while True:
             time.sleep(DELAY)
             ss = select.select
