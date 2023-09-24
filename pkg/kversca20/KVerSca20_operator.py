@@ -224,7 +224,6 @@ def getPodIdx(pods):
     return pod_idx
 
 def modifyLabel(key,value):
-    pod = getPod()
     dict_entry = [{'op': 'replace', 'path': f'/metadata/labels/{key}',
                                     'value': value
                                     }]

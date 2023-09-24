@@ -45,6 +45,13 @@ function_mapping = {
     'D': 'thumbnailer',
 }
 
+service_mapping = {
+    'A': 'sebs-compression',
+    'B': 'sebs-dynamic-html',
+    'C': 'sebs-network',
+    'D': 'sebs-thumbnailer',
+}
+
 port_mapping = {
     'compression': 31080,
     'dynamic_html': 31081,
@@ -60,13 +67,15 @@ class UserTasks(TaskSet):
         global active_functions
         function = np.random.choice(active_functions)
         function_name = function_mapping[function]
+        service_name = service_mapping[function]
         function_port = port_mapping[function_name]
         # In-cluster
-        #self.client.post(f"http://{function_name}.default.svc.cluster.local:80/function/{function_name}", json=json_data[function_name])
+        self.client.post(f"http://{service_name}.default.svc.cluster.local:80/function/{function_name}", json=json_data[function_name])
         # Outside cluster
-        #self.client.post(f"http://<Public_IP_Address>:{function_port}/function/{function_name}", json=json_data[function_name])
-        self.client.post(f"http://localhost:{function_port}/function/{function_name}", json=json_data[function_name])
-
+        ##self.client.post(f"http://<Public_IP_Address>:{function_port}/function/{function_name}", json=json_data[function_name]) # AWS
+        #print(f"URL is: http://127.0.0.1:{function_port}/function/{function_name}")
+        #self.client.post(f"http://127.0.0.1:{function_port}/function/{function_name}", json=json_data[function_name])
+        ##self.client.post(f"http://localhost:8000/function/{function_name}", json=json_data[function_name]) # Single-server local
 
 class WebsiteUser(HttpUser):
     wait_time = constant(1)
@@ -85,7 +94,9 @@ class CustomShape(LoadTestShape):
             users = self.user_factory.get_workload(normalized_time)
             active_functions = active_function_schedule[int(normalized_time * (len(active_function_schedule) - 0.01))]
             n_users = users.sum()
-            return round(n_users), 1
+            #return round(n_users), 1
+            x = 2
+            return int(n_users/x), 1
         else:
             return None
 

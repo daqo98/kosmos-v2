@@ -32,6 +32,7 @@ myIP = socket.gethostbyname(myHostName)
 logger.info(f"IP address of the localhost is {myIP}")
 EXTERNAL_PROXY_ADDR = (myIP,PROXY_PORT)
 PROXY_LIST = [INTERNAL_PROXY_ADDR, EXTERNAL_PROXY_ADDR]
+[cpu_req, cpu_lim, mem_req, mem_lim] = getDefaultConfigContainer()
 
 class Forward:
     def __init__(self):
@@ -67,7 +68,7 @@ class TheServer:
 
     input_list = []
     channel = {}
-    waiting_time_interval = 1 # in seconds
+    waiting_time_interval = 0.1 # in seconds
     separator = "____________________________________________________________________________________________________"
 
     def __init__(self, host, port):
@@ -85,7 +86,11 @@ class TheServer:
         self.reqs_per_client = {}
         self.fd_to_client_dict = {}
 
-        self.to_zero_flag = False
+        if isInZeroState(self.zero_state):
+            self.to_zero_flag = True
+        else:
+            self.to_zero_flag = False
+
         self.thr_to_zero = Thread(target=self.thread_to_zero)
         self.thr_to_zero.start()
 
@@ -115,17 +120,17 @@ class TheServer:
         self.to_zero_flag = False
         logger.info(self.separator)
         logger.info("Vertical scale FROM zero")
-        [cpu_req, cpu_lim, mem_req, mem_lim] = getDefaultConfigContainer()
+        
         #TODO: Pass default SLA as a dict
         #verticalScale(cpu_req = cpu_req, cpu_lim = cpu_lim, mem_req = mem_req, mem_lim = mem_lim)
         verticalScale(cpu_req, cpu_lim)
         #updateSLA(cpu_req, cpu_lim, mem_req, mem_lim, "100m")
         ctr = 0
         # Wait some time till app container is ready
-        while ((isContainerReady() != True)):
-            ctr = ctr+1
-            logger.info(f"Cycle of {self.waiting_time_interval} secs #: {ctr}")
-            time.sleep(self.waiting_time_interval)
+        #while ((isContainerReady() != True)):
+            #ctr = ctr+1
+            #logger.info(f"Cycle of {self.waiting_time_interval} secs #: {ctr}")
+            #time.sleep(self.waiting_time_interval)
         modifyLabel('autoscaling',"Kosmos")
         logger.info(self.separator)
 
@@ -153,7 +158,7 @@ class TheServer:
             for self.conn_orig in inputready:
                 if self.conn_orig == self.server:
                     # Perform vertical scaling and wait for container is ready before forwarding the request.
-                    if isInZeroState(self.zero_state):
+                    if self.to_zero_flag:
                         self.vscale_from_zero()
                     self.on_accept() # Attempt to connect client
                     break

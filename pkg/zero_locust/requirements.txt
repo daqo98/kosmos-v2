@@ -6,3 +6,5 @@ scikit-learn==1.2.2
 kubernetes==26.1.0
 sqlalchemy==1.4.41
 psycopg2-binary==2.9.3
+gdown==4.7.1
+unzip==1.0.0

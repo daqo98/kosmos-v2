@@ -9,9 +9,10 @@ RUN apt update -y
 RUN apt install nano screen  -y
 RUN apt install screen -y
 
-COPY cabspottingdata ./cabspottingdata
-COPY tdrive ./tdrive
-COPY telecom ./telecom
+#COPY cabspottingdata ./cabspottingdata
+#COPY tdrive ./tdrive
+#COPY telecom ./telecom
+COPY get_datasets.sh .
 COPY *.py .
 
 CMD exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
