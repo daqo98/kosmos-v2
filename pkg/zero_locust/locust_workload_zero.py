@@ -95,7 +95,7 @@ class CustomShape(LoadTestShape):
             active_functions = active_function_schedule[int(normalized_time * (len(active_function_schedule) - 0.01))]
             n_users = users.sum()
             #return round(n_users), 1
-            x = 2
+            x = 100
             return int(n_users/x), 1
         else:
             return None
