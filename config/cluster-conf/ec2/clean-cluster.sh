@@ -17,7 +17,7 @@ echo $umount_times
 if [[ $umount_times -ge 1 ]] ; then
   for i in `seq 1 $umount_times`
   do
-    sudo umount -lf tmpfs
+    sudo umount -lf tmpfs || true
   done
 fi
 
