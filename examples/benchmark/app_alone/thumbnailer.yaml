@@ -108,7 +108,7 @@ spec:
     app: sebs-thumbnailer
   type: NodePort
   ports:
-    - port: 8000
-      targetPort: 80
+    - port: 80
+      targetPort: 8000
       nodePort: 31083
       protocol: TCP
