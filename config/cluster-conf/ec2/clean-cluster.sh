@@ -13,11 +13,13 @@ fi
 
 # If device or resource busy
 umount_times=$(mount | grep /var/lib/kubelet/ | wc -l)
-echo $umount_times
+echo "umount_times: ${umount_times}"
 if [[ $umount_times -ge 1 ]] ; then
   for i in `seq 1 $umount_times`
   do
-    sudo umount -lf tmpfs || true
+    sudo umount -lf tmpfs
+    echo $i
+    sleep 1
   done
 fi
 
