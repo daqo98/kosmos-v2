@@ -69,6 +69,7 @@ class TheServer:
     input_list = []
     channel = {}
     waiting_time_interval = 0.1 # in seconds
+    sleep_thread_to_zero = 1
     separator = "____________________________________________________________________________________________________"
 
     def __init__(self, host, port):
@@ -91,18 +92,19 @@ class TheServer:
         else:
             self.to_zero_flag = False
 
-        self.thr_to_zero = Thread(target=self.thread_to_zero)
-        self.thr_to_zero.start()
+        #self.thr_to_zero = Thread(target=self.thread_to_zero)
+        #self.thr_to_zero.start()
 
     def thread_to_zero(self):
         ctr = 0
         while True:
-            if self.to_zero_flag:          
+            if self.to_zero_flag:
+                # Sacar sleep
+                ctr = ctr+1
+                logger.info(f"Cycle of {self.sleep_thread_to_zero} secs #: {ctr}")
+                time.sleep(self.sleep_thread_to_zero)         
                 if not isInZeroState(self.zero_state):
                     verticalScale(self.zero_state.cpu_req, self.zero_state.cpu_lim)
-                    ctr = ctr+1
-                    logger.info(f"Cycle of {self.waiting_time_interval} secs #: {ctr}")
-                    time.sleep(self.waiting_time_interval)
             else:
                 ctr = 0
 
