@@ -9,6 +9,8 @@ json_data = {
                     'n': 30000},
     'compression': {'url': 'https://cdn.bestmovie.it/wp-content/uploads/2020/05/winnie-the-pooh-disney-plus-HP.jpg',
                     'compression_mode': 1000},
+    'graph_mst': {'size': 25000},
+    'graph_bfs': {'size': 30000},
 }
 
 # The workload is designed as an edge workload
@@ -21,7 +23,7 @@ node_coordinates = np.array([
 functions = [
     "compression",
     "dynamic_html",
-    "network",
+    "graph_mst",
     "thumbnailer"
 ]
 functions_weights = np.array([
@@ -41,21 +43,21 @@ active_functions = ['A', 'B']
 function_mapping = {
     'A': 'compression',
     'B': 'dynamic_html',
-    'C': 'network',
+    'C': 'graph_mst',
     'D': 'thumbnailer',
 }
 
 service_mapping = {
     'A': 'sebs-compression',
     'B': 'sebs-dynamic-html',
-    'C': 'sebs-network',
+    'C': 'sebs-graph-mst',
     'D': 'sebs-thumbnailer',
 }
 
 port_mapping = {
     'compression': 31080,
     'dynamic_html': 31081,
-    'network': 31082,
+    'graph_mst': 31082,
     'thumbnailer': 31083,
 }
 
