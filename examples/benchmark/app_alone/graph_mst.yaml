@@ -6,7 +6,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sebs-sebs-graph-mst
+      app: sebs-graph-mst
   template:
     metadata:
       labels:
@@ -38,10 +38,10 @@ spec:
               restartPolicy: NotRequired
           resources:
             requests:
-              memory: 1Gi
+              memory: 2Gi
               cpu: 250m
             limits:
-              memory: 1Gi
+              memory: 2Gi
               cpu: 250m
         - name: http-metrics
           image: systemautoscaler/http-metrics:0.1.0
@@ -109,6 +109,6 @@ spec:
   type: NodePort
   ports:
     - port: 80
-      targetPort: 8000
+      targetPort: 80
       nodePort: 31082
       protocol: TCP
