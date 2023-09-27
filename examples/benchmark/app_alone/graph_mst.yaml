@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sebs-sebs-graph-mst
+  name: sebs-graph-mst
 spec:
   replicas: 1
   selector:
