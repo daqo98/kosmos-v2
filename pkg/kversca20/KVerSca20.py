@@ -69,7 +69,7 @@ class TheServer:
     input_list = []
     channel = {}
     waiting_time_interval = 0.1 # in seconds
-    sleep_thread_to_zero = 1
+    sleep_thread_to_zero = 6
     separator = "____________________________________________________________________________________________________"
 
     def __init__(self, host, port):
@@ -92,14 +92,14 @@ class TheServer:
         else:
             self.to_zero_flag = False
 
-        #self.thr_to_zero = Thread(target=self.thread_to_zero)
-        #self.thr_to_zero.start()
+        self.thr_to_zero = Thread(target=self.thread_to_zero)
+        self.thr_to_zero.start()
 
     def thread_to_zero(self):
         ctr = 0
         while True:
-            if self.to_zero_flag:
-                # Sacar sleep
+            if self.thread_to_zero_flag:
+                self.thread_to_zero_flag = False
                 ctr = ctr+1
                 logger.info(f"Cycle of {self.sleep_thread_to_zero} secs #: {ctr}")
                 time.sleep(self.sleep_thread_to_zero)         
@@ -108,9 +108,9 @@ class TheServer:
             else:
                 ctr = 0
 
-
     def vscale_to_zero(self):
         self.to_zero_flag = True
+        self.thread_to_zero_flag = True
         logger.info(self.separator)
         logger.info("Vertical scale TO zero")
         modifyLabel('autoscaling',"VerSca20")

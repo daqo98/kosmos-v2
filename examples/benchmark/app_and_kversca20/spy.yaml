@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prime-numbers
+spec:
+  selector:
+    matchLabels:
+      app: prime-numbers
+  replicas: 6
+  template:
+    metadata:
+      labels:
+        app: prime-numbers
+        autoscaling: kosmos
+        logger: "on"
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - prime-numbers
+              topologyKey: "kubernetes.io/hostname"
+      serviceAccountName: pod-controller-sa
+      containers:
+        - name: prime-numbers
+          image: systemautoscaler/prime-numbers:0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          resizePolicy:
+            - resourceName: cpu
+              restartPolicy: NotRequired
+            - resourceName: memory
+              restartPolicy: NotRequired
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 250m
+            limits:
+              memory: 128Mi
+              cpu: 250m
+          volumeMounts:
+          - name: persistent-storage
+            mountPath: /data 
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: mypvc
