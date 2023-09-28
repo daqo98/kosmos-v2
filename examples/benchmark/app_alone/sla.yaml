@@ -45,7 +45,7 @@ spec:
 apiVersion: systemautoscaler.polimi.it/v1beta1
 kind: ServiceLevelAgreement
 metadata:
-  name: sebs-network
+  name: sebs-graph-mst
 spec:
   metric:
     responseTime: 100m
@@ -59,10 +59,10 @@ spec:
     memory: 4Gi
     cpu: 2000m
   service:
-    container: sebs-network
+    container: sebs-graph-mst
     selector:
       matchLabels:
-        app: sebs-network
+        app: sebs-graph-mst
 ---
 apiVersion: systemautoscaler.polimi.it/v1beta1
 kind: ServiceLevelAgreement

@@ -23,7 +23,7 @@ nodes:
     hostPort: 31081
     listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
     protocol: tcp # Optional, defaults to tcp
-  - containerPort: 31082 # SeBS-network
+  - containerPort: 31082 # SeBS-graph_mst
     hostPort: 31082
     listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
     protocol: tcp # Optional, defaults to tcp
